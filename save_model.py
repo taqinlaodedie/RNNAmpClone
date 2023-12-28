@@ -12,7 +12,6 @@ def save_model(args):
                 "output_channels": 1,
                 "input_channels": 1,
                 "hidden_size": args.hidden_size,
-                "recurrent_units": args.sequence_length,
                 "bias": args.bias,
                 "variables": []}
     
@@ -28,7 +27,6 @@ def save_model(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="model.pth")
-    parser.add_argument("--sequence_length", type=int, default=128)
     parser.add_argument("--hidden_size", type=int, default=32)
     parser.add_argument("--bias", type=bool, default=True)
     args = parser.parse_args()

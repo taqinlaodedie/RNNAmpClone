@@ -1,6 +1,7 @@
 import argparse
 import pickle
 import torch
+import sys
 from network import LSTMNet, FxDataset, RMSELoss
 
 def main(args):
@@ -31,27 +32,33 @@ def main(args):
     loss_function = RMSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     minimum_loss = 1e6
+    best_index = 0
 
     for i in range(args.max_epochs):
+        print("*********** Epoch {} **************".format(i+1))
         train_loss = model.train_epoch(train_dataset, loss_function, optimizer, device, shuffle=True)
         valid_loss = model.valid_epoch(valid_dataset, loss_function, device)
-        print("Epoch {}: train loss {}, valid loss {}".format(i, train_loss, valid_loss))
+        print("Train loss {}, Valid loss {}".format(train_loss, valid_loss))
         if valid_loss < minimum_loss:
             minimum_loss = valid_loss
+            best_index = i
             torch.save(model, "model.pth")
+        if i - best_index > 20:
+            print("Val loss stays constant, finish training")
+            sys.exit()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_size", type=int, default=1)
-    parser.add_argument("--hidden_size", type=int, default=32)
+    parser.add_argument("--hidden_size", type=int, default=96)
     parser.add_argument("--num_layers", type=int, default=1)
     parser.add_argument("--bias", type=bool, default=True)
-    parser.add_argument("--sequence_length", type=int, default=128)
+    parser.add_argument("--sequence_length", type=int, default=4410)
 
-    parser.add_argument("--batch_size", type=int, default=256)
-    parser.add_argument("--learning_rate", type=float, default=3e-3)
+    parser.add_argument("--batch_size", type=int, default=5)
+    parser.add_argument("--learning_rate", type=float, default=1e-3)
 
-    parser.add_argument("--max_epochs", type=int, default=100)
+    parser.add_argument("--max_epochs", type=int, default=2000)
 
     parser.add_argument("--data", default="data.pickle")
     args = parser.parse_args()

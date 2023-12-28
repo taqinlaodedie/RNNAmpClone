@@ -11,23 +11,20 @@ class FxDataset(TensorDataset):
     def __init__(self, x, y, window_len, batch_size):
         super(TensorDataset, self).__init__()
 
-        len_index = len(x) - (len(x) % window_len)
+        len_index = len(x) - (len(x) % (window_len * batch_size))
         self.x = x[:len_index].reshape(-1, 1)
-        self.y = y[window_len-1 : len_index].reshape(-1, 1)
+        self.y = y[:len_index].reshape(-1, 1)
+        self.frame_size = window_len * batch_size
         self.window_len = window_len
         self.batch_size = batch_size
 
     def __getitem__(self, index):
-        x_out = []
-        for i in range(index*self.batch_size, (index+1)*self.batch_size):
-            x_out.append(self.x[i : i+self.window_len])
-        x_out = torch.stack(x_out)
-        y_out = self.y[index*self.batch_size : (index+1)*self.batch_size]
-        
+        x_out = self.x[index*self.frame_size : (index+1)*self.frame_size].reshape(self.batch_size, self.window_len, 1)
+        y_out = self.y[index*self.frame_size : (index+1)*self.frame_size].reshape(self.batch_size, self.window_len, 1)
         return x_out, y_out
     
     def __len__(self):
-        return math.floor((len(self.x) - self.window_len + 1) / self.batch_size)
+        return math.floor(len(self.x) / self.frame_size)
     
 class RMSELoss(torch.nn.Module):
     def __init__(self):
@@ -51,8 +48,8 @@ class LSTMNet(nn.Module):
         x = x.permute(1, 0, 2)
         rec_out, (self.hn, self.cn) = self.rec(x, (self.hn, self.cn))  
         out = self.lin(rec_out)
-        
-        return out[-1, :, :]
+        out = out.permute(1, 0, 2)
+        return out
     
     def reset_hiddens(self, batch_size, device):
         self.hn = torch.zeros((self.num_layers, batch_size, self.hidden_size)).to(device)
@@ -66,6 +63,12 @@ class LSTMNet(nn.Module):
         epoch_loss = 0
         for i in range(len(dataset)):
             x, y = dataset[shuffle[i]]
+            # Use the first batch to init parameters
+            if i == 0:
+                batch_size = x.shape[0]
+                self.reset_hiddens(batch_size, device)
+                y_pred = self.forward(x)
+                continue
             batch_size = x.shape[0]
             optimizer.zero_grad()
             self.reset_hiddens(batch_size, device)
@@ -74,6 +77,7 @@ class LSTMNet(nn.Module):
             loss.backward()
             optimizer.step()
             epoch_loss = epoch_loss + loss
+            print("Frame {}/{}: {:.2%}".format(i, len(dataset), i/len(dataset)), end='\r')
         epoch_loss = epoch_loss / (i + 1)
         return epoch_loss
     
