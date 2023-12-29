@@ -3,12 +3,12 @@ import numpy as np
 import json
 import torch
 
-from network import LSTMNet
+from network import RnnNet
 
 def save_model(args):
     model = torch.load(args.model)
 
-    data_out = {"type": "LSTM", 
+    data_out = {"type": "GRU", 
                 "output_channels": 1,
                 "input_channels": 1,
                 "hidden_size": args.hidden_size,
@@ -27,7 +27,7 @@ def save_model(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="model.pth")
-    parser.add_argument("--hidden_size", type=int, default=32)
+    parser.add_argument("--hidden_size", type=int, default=96)
     parser.add_argument("--bias", type=bool, default=True)
     args = parser.parse_args()
     save_model(args)
