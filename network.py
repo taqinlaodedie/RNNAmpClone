@@ -42,28 +42,27 @@ class RnnNet(nn.Module):
         self.num_layers = num_layers
         self.hidden_size = hidden_size
 
-        # self.rec = LSTM(input_size, hidden_size, num_layers, bias=bias, batch_first=True)
-        self.rec = GRU(input_size, hidden_size, num_layers, bias=bias, batch_first=True)
+        self.rec = LSTM(input_size, hidden_size, num_layers, bias=bias, batch_first=True)
+        # self.rec = GRU(input_size, hidden_size, num_layers, bias=bias, batch_first=True)
         self.lin = Linear(hidden_size, 1, bias=bias)
 
     def forward(self, x):
-        # rec_out, (self.hn, self.cn) = self.rec(x, (self.hn, self.cn))
-        rec_out, self.hn,  = self.rec(x, self.hn)
+        rec_out, (self.hn, self.cn) = self.rec(x, (self.hn, self.cn))
+        # rec_out, self.hn,  = self.rec(x, self.hn)
         out = self.lin(rec_out)
-        out += x
         return out
     
     def reset_hiddens(self, batch_size, device):
         self.hn = torch.zeros((self.num_layers, batch_size, self.hidden_size)).to(device)
-        # self.cn = torch.zeros((self.num_layers, batch_size, self.hidden_size)).to(device)
+        self.cn = torch.zeros((self.num_layers, batch_size, self.hidden_size)).to(device)
 
     def detach_hidden(self):
         if self.hn.__class__ == tuple:
             self.hn = tuple([h.clone().detach() for h in self.hn])
-            # self.cn = tuple([c.clone().detach() for c in self.cn])
+            self.cn = tuple([c.clone().detach() for c in self.cn])
         else:
             self.hn = self.hn.clone().detach()
-            # self.cn = self.cn.clone().detach()
+            self.cn = self.cn.clone().detach()
 
     def train_epoch(self, dataset:FxDataset, loss_function, optimizer:torch.optim.Optimizer, device, init_len=200, up_fr=1000):
         epoch_loss = 0
