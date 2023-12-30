@@ -21,13 +21,14 @@ def save_model(args):
             "data": model.state_dict()[parameter_tensor].cpu().flatten().numpy().tolist()
             })
     # output final dictionary to json file
-    with open('converted_model.json', 'w') as outfile:
+    with open('models/' + args.name + '.json', 'w') as outfile:
         json.dump(data_out, outfile)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="model.pth")
-    parser.add_argument("--hidden_size", type=int, default=96)
+    parser.add_argument("--hidden_size", type=int, default=32)
     parser.add_argument("--bias", type=bool, default=True)
+    parser.add_argument("--name", default="converted_model")
     args = parser.parse_args()
     save_model(args)

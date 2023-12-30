@@ -46,15 +46,15 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_size", type=int, default=1)
-    parser.add_argument("--hidden_size", type=int, default=64)
+    parser.add_argument("--hidden_size", type=int, default=32)
     parser.add_argument("--num_layers", type=int, default=1)
     parser.add_argument("--bias", type=bool, default=True)
     parser.add_argument("--sequence_length", type=int, default=22050)
 
-    parser.add_argument("--batch_size", type=int, default=3)
+    parser.add_argument("--batch_size", type=int, default=5)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
 
-    parser.add_argument("--max_epochs", type=int, default=200)
+    parser.add_argument("--max_epochs", type=int, default=100)
 
     parser.add_argument("--data", default="data.pickle")
     args = parser.parse_args()

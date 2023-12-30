@@ -4,6 +4,8 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
+from scipy.fftpack import fft
+from scipy.signal.windows import hamming
 
 from network import FxDataset
 
@@ -44,11 +46,35 @@ def main(args):
     wav_write("target.wav", target)
     
     plt.figure(1)
+    plt.title("Samples of first 10s")
     plt.plot(target[:441000], label='target')
     plt.plot(pred[:441000], label='pred')
     plt.legend()
     plt.show()
 
+    N = 1024
+    start_ind = 0
+    pred = pred[start_ind : start_ind+int(N/4)]
+    target = target[start_ind : start_ind+int(N/4)]
+    pred = np.concatenate((pred, np.zeros(int(3*N/4))))
+    target = np.concatenate((target, np.zeros(int(3*N/4))))
+    window = hamming(N)
+    pred *= window
+    target *= window
+    fft_pred = 20 * np.log10(np.abs(fft(pred)) / N * 2.0)
+    fft_pred = fft_pred[range(int(N / 2))]
+    fft_target = 20 * np.log10(np.abs(fft(target)) / N * 2.0)
+    fft_target = fft_target[range(int(N / 2))]
+    fre = np.arange(int(N / 2)) * 44100.0 / N
+
+    plt.figure(2)
+    plt.title("Frequency")
+    plt.plot(fre, fft_target, label='target')
+    plt.plot(fre, fft_pred, label='pred')
+    plt.xlabel("Frequency/Hz")
+    plt.ylabel("dB")
+    plt.legend()
+    plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

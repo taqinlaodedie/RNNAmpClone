@@ -57,18 +57,38 @@ class RnnNet(nn.Module):
         self.hn = torch.zeros((self.num_layers, batch_size, self.hidden_size)).to(device)
         # self.cn = torch.zeros((self.num_layers, batch_size, self.hidden_size)).to(device)
 
-    def train_epoch(self, dataset:FxDataset, loss_function, optimizer:torch.optim.Optimizer, device):
+    def detach_hidden(self):
+        if self.hn.__class__ == tuple:
+            self.hn = tuple([h.clone().detach() for h in self.hn])
+            # self.cn = tuple([c.clone().detach() for c in self.cn])
+        else:
+            self.hn = self.hn.clone().detach()
+            # self.cn = self.cn.clone().detach()
+
+    def train_epoch(self, dataset:FxDataset, loss_function, optimizer:torch.optim.Optimizer, device, init_len=200, up_fr=1000):
         epoch_loss = 0
         for i in range(len(dataset)):
             x, y = dataset[i]
             batch_size = x.shape[0]
             self.reset_hiddens(batch_size, device)
+
+            # Init parameters
+            self.forward(x[:, :init_len, :])
+            x = x[:, init_len:, :]
+            y = y[:, init_len:, :]
             optimizer.zero_grad()
-            y_pred = self.forward(x)
-            loss = loss_function(y, y_pred)
-            loss.backward()
-            optimizer.step()
-            epoch_loss = epoch_loss + loss
+
+            batch_loss = 0
+            for j in range(math.ceil(x.shape[1] / up_fr)):
+                y_pred = self.forward(x[:, j*up_fr : (j+1)*up_fr, :])
+                loss = loss_function(y[:, j*up_fr : (j+1)*up_fr, :], y_pred)
+                loss.backward()
+                optimizer.step()
+                self.detach_hidden()
+                optimizer.zero_grad()
+                batch_loss += loss
+            batch_loss /= (j + 1)
+            epoch_loss += batch_loss
             print("Batch {}/{}: {:.2%}".format(i, len(dataset), i/len(dataset)), end='\r')
         epoch_loss = epoch_loss / (i + 1)
         return epoch_loss
