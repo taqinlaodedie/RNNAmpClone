@@ -27,8 +27,7 @@ def main(args):
         torch.from_numpy(data["x_valid"]).to(device), 
         torch.from_numpy(data["y_valid"]).to(device), 
         args.sequence_length, 
-        args.batch_size,
-        shuffle=False
+        args.batch_size
     )
 
     with torch.no_grad():
