@@ -35,17 +35,9 @@ class RMSELoss(torch.nn.Module):
         self.mse = torch.nn.MSELoss()
 
     def forward(self, x, y):
+        x = x[:, 1:, :] - 0.85 * x[:, :-1, :]
+        y = y[:, 1:, :] - 0.85 * y[:, :-1, :]
         return torch.sqrt(self.mse(x, y))
-    
-class ESRLoss(torch.nn.Module):
-    def __init__(self):
-        super(ESRLoss, self).__init__()
-
-    def forward(self, x, y):
-        return torch.mean(
-            torch.mean(torch.square(x - y), dim=1)
-            / torch.mean(torch.square(y), dim=1)
-        )
 
 class RnnNet(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers=1, bias=True):
@@ -77,7 +69,7 @@ class RnnNet(nn.Module):
             self.hn = self.hn.clone().detach()
             # self.cn = self.cn.clone().detach()
 
-    def train_epoch(self, dataset:FxDataset, loss_function, optimizer:torch.optim.Optimizer, device, init_len=200, up_fr=1000):
+    def train_epoch(self, dataset:FxDataset, loss_function, optimizer:torch.optim.Optimizer, device, init_len=100, up_fr=1000):
         epoch_loss = 0
         dataset.shuffle()
         for i in range(len(dataset)):

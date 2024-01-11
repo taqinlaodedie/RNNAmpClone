@@ -27,7 +27,7 @@ def save_model(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="model.pth")
-    parser.add_argument("--hidden_size", type=int, default=64)
+    parser.add_argument("--hidden_size", type=int, default=24)
     parser.add_argument("--bias", type=bool, default=True)
     parser.add_argument("--name", default="converted_model")
     args = parser.parse_args()
