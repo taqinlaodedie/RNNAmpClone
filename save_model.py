@@ -8,7 +8,7 @@ from network import RnnNet
 def save_model(args):
     model = torch.load(args.model)
 
-    data_out = {"type": "LSTM", 
+    data_out = {"type": "GRU", 
                 "output_channels": 1,
                 "input_channels": 1,
                 "hidden_size": args.hidden_size,
